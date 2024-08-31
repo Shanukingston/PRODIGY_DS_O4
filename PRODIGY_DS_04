@@ -1,0 +1,76 @@
+import numpy as np 
+import pandas as pd 
+
+import os
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+df = pd.read_csv("/content/sentimentdataset.csv")
+df.head(5)
+df = pd.read_csv("/content/sentimentdataset.csv")
+df.head(5)
+print('Columns of dataset: ', df.columns, '\n')
+print('Dimension of dataset: ', df.shape, '\n')
+print('Infomation of dataset: ', df.info())
+df.isnull().sum()
+df.duplicated().sum()
+df1=df.drop(['Unnamed: 0.1', 'Unnamed: 0'], axis=1)
+df1.describe()
+df1.describe(include=['object'])
+df1['Text']= df1['Text'].str.strip()
+df1['Sentiment']= df1['Sentiment'].str.strip()
+df1['User']= df1['User'].str.strip()
+df1['Platform']= df1['Platform'].str.strip()
+df1['Hashtags']= df1['Hashtags'].str.strip()
+df1['Country']= df1['Country'].str.strip()
+print("Print unique values in 'Platform'column: ", df1['Platform'].unique(), '\n')
+print("Value counts in 'Platform' column: ", '\n', df1['Platform'].value_counts())
+df1.sample(3)
+import datetime as dt
+df1['time'] = pd.to_datetime(df1.Timestamp)
+df1['Date'] = df1['time'].dt.date
+df1['Time'] = df1['time'].dt.time
+#df1['new_Day']=df1['time'].dt.day
+df1['Weekday']=df1['time'].dt.weekday  #<--- weekday value: 0 ~ 6
+#df1.drop(['Timestamp', 'time'], axis=1) #<--- not working in here
+df1.head(2)
+df2=df1.drop(['Timestamp', 'time'], axis=1)
+df2.head(2)
+df2['Monthname']=df2['Month'].replace([1,2,3,4,5,6,7,8,9,10,11,12], ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'])
+df2['Weekdayname']=df2['Weekday'].replace([0,1,2,3,4,5,6], ['Mon','Tue','Wed','Thur','Fri','Sat','Sun'])
+df2.head(2)
+df2.drop('Weekday', axis=1).sample(2)
+print('Name of value in the Monthname column:', df2.Monthname.unique())
+print('Name of value in the Weekdayname column: ', df2.Weekdayname.unique())
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+plt.figure(figsize=(10, 5))
+df2['Sentiment'].value_counts().nlargest(20).plot(kind='bar')
+plt.title("Kinds of Sentiment in descending order")
+plt.figure(figsize=(10, 5))
+df2['Platform'].value_counts().plot(kind='pie', autopct='%1.1f%%')
+plt.title("Proportion of Platform")
+plt.figure(figsize=(10, 5))
+df2['Country'].value_counts().nlargest(15).plot(kind='bar')
+for column in df2[['Year', 'Likes', 'Retweets']]:
+    print(f"Maxiumn value: {column}:{df2[column].max()} | Minimum value: {column}:{df2[column].min()}")
+plt.figure(figsize=(10, 5))
+df2.groupby('Country')['Likes'].sum().nlargest(15).plot(kind='bar')
+plt.figure(figsize=(10, 5))
+df3=df2.groupby('Hashtags')['Retweets'].sum().nlargest(10).sort_values(ascending=False)
+df3.plot(kind='bar')
+plt.xticks(rotation=80)
+Twitter=df2[df2['Platform']=='Twitter']
+df5=Twitter.groupby('Year')['Likes'].sum().reset_index()
+plt.figure(figsize=(10, 5))
+sns.lineplot(data=df5, x='Year', y='Likes', marker='o')
+plt.title("Accumulative 'Likes' over years on Twitter")
+Instagram=df2[df2['Platform']=='Instagram']
+df_ins=Instagram.groupby('Year')['Retweets'].sum().reset_index()
+
+plt.figure(figsize=(12, 5))
+sns.lineplot(data=df_ins, x='Year', y='Retweets', marker='o')
+for index, value in df_ins.iterrows():
+    plt.text(value['Year'], value['Retweets'], str(value['Retweets']), ha='left', va='bottom')
+plt.title("Accumulative 'Retweets' over time on Instagram")
